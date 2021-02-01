@@ -4,5 +4,7 @@ The dataset was downloaded from https://www.kaggle.com/soumikrakshit/anime-faces
 ![alt text](https://github.com/yernat-assylbekov/Anime-Faces-with-DCGAN/blob/master/images/images_from_train_set.png?raw=true)
 
 
+## Results
 
 ![alt text](https://github.com/kouwis/DCgan/blob/main/gif.gif?raw=true)
+
