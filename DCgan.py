@@ -1,3 +1,5 @@
+## Import Libs
+
 from keras.layers import UpSampling2D, Dense, Conv2D, BatchNormalization, Dropout, Flatten, Reshape, Activation
 from keras.models import Sequential
 from keras.layers.advanced_activations import LeakyReLU
@@ -9,6 +11,8 @@ import os
 from tqdm import tqdm
 import tensorflow as tf
 import imageio
+
+## Define Constans
 
 GENERATE_SQUARE = 96
 IMG_CHANNEL = 3
@@ -22,6 +26,11 @@ train = []
 PREVIEW_ROWS = 4
 PREVIEW_COLS = 7
 PREVIEW_MARGIN = 16
+cross_entropy = cross_entropy()
+generator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
+discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
+
+## Prepare Data
 
 for filename in tqdm(os.listdir(PATH)):
     img_ = Image.open(PATH+ "/"+ filename).resize((GENERATE_SQUARE, GENERATE_SQUARE),Image.ANTIALIAS)
@@ -30,6 +39,8 @@ train = np.reshape(train,(-1, GENERATE_SQUARE, GENERATE_SQUARE, IMG_CHANNEL))
 train = train.astype(np.float32)
 train = train / 127.5 - 1.
 train_ = tf.data.Dataset.from_tensor_slices(train).shuffle(BUFFER_DATA).batch(BATCH_SIZE)
+
+## Build Generator
 
 def build_generator():
 
@@ -63,6 +74,8 @@ def build_generator():
     print(model.summary())
 
     return model
+
+## Build Discriminator
 
 def build_discriminator():
 
@@ -100,6 +113,8 @@ def build_discriminator():
 
     return model
 
+## Save image after epoch
+
 def save_images(cnt):
 
     fixed_seed = np.random.normal(0, 1, (4 * 7, NOISE))
@@ -126,19 +141,19 @@ def save_images(cnt):
     im = Image.fromarray(image_array)
     im.save(filename)
 
+## Train Generator as a test
+    
 generator = build_generator()
 noise_img = tf.random.normal([1, NOISE])
 generate_imgs = generator(noise_img)
-plt.imshow(generate_imgs[0, :, :, 0])
+
+## Train Discriminator as a test
 
 discriminator = build_discriminator()
 decision = discriminator(generate_imgs)
 print(decision)
 
-cross_entropy = cross_entropy()
-
-generator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
-discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
+## Get Discriminator loss
 
 def discriminator_loss(real_imgs, fake_imgs):
 
@@ -148,10 +163,13 @@ def discriminator_loss(real_imgs, fake_imgs):
 
     return total_loss
 
+## Get Generator loss
+
 def generator_loss(fake_imgs):
 
     return cross_entropy(tf.ones_like(fake_imgs), fake_imgs)
 
+## Sub_train func to Train Generator and Discriminator
 
 def sub_train(images):
 
@@ -172,6 +190,8 @@ def sub_train(images):
         discriminator_optimizer.apply_gradients(zip(gradient_dis, discriminator.trainable_variables))
 
     return gen_loss, dis_loss
+
+## Train func to train Gen, Dis and show loss 
 
 def train(dataset, epochs):
 
@@ -194,15 +214,17 @@ def train(dataset, epochs):
 
 train(train_, EPOCHS)
 
+## To create Gif as a result
+
 folder = "gif"
-
 images = []
-
 for filename in tqdm(os.listdir(folder)):
     file = folder+ "/"+ filename
     img = imageio.imread(file)
     images.append(img)
 
 imageio.mimwrite("DCgan.gif", images, fps= 3)
+
+## Save Model weights
 
 generator.save('generator_model.h5')
